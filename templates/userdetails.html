@@ -1,0 +1,32 @@
+{% extends "base.html" %} 
+
+{% block title %}
+{{user.firstname}} {{user.lastname}}
+{% endblock %} 
+
+{% block main %}
+<div class="row">
+  <div class="col">
+    <img
+      class="rounded-circle img-fluid h-50 float-right"
+      src="{{user.image_url}}"
+      alt="{{user.first_name}} {{user.last_name}} profile pic"
+    />
+  </div>
+  <div class="col">
+    <h2>{{user.first_name}} {{user.last_name}}</h2>
+    <div class="row">
+        <form action="/users/{{user.id}}/edit" class="ml-3">
+        <button class="btn btn-primary">Edit</button>
+        </form>
+        <form action="/users/{{user.id}}/delete" class="ml-2">
+        <button class="btn btn-danger">Delete</button>
+        </form>
+        <form action="/users" class="ml-2">
+        <button class="btn btn-secondary">Home</button>
+        </form>
+    </div>  
+  </div>
+</div>
+
+{% endblock %}
