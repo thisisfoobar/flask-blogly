@@ -1,5 +1,6 @@
 """Models for Blogly."""
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 
 db = SQLAlchemy()
 
@@ -13,6 +14,8 @@ class User(db.Model):
 
     __tablename__ = "users"
 
+    default_url = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/1200px-Default_pfp.svg.png'
+
     id = db.Column(db.Integer,
                    primary_key=True,
                    autoincrement=True)
@@ -20,9 +23,16 @@ class User(db.Model):
                            nullable=False)
     last_name = db.Column(db.String(30),
                           nullable=False)
-    image_url = db.Column(db.String(300),
-                          default='https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/1200px-Default_pfp.svg.png')
+    image_url = db.Column(db.String(1000),
+                          nullable=True,
+                          default=default_url)
     
+    @property
+    def full_name(self):
+        """Return full name of user"""
+
+        return f"{self.first_name} {self.last_name}"
+
     def __repr__(self):
         """Show info about user"""
 

@@ -24,7 +24,7 @@ def user_redirect():
 @app.route("/users")
 def users_list():
     """display list of all users"""
-    users = User.query.all()
+    users = User.query.order_by(User.last_name, User.first_name).all()
     return render_template("userlist.html", users=users)
 
 @app.route("/users/new")
@@ -39,6 +39,12 @@ def add_user():
     first_name = request.form['firstname']
     last_name = request.form['lastname']
     image_url = request.form['url']
+    if image_url:
+        if len(image_url) > 1000:
+            image_url = None
+            flash('Image URL greater than 1000, using default image')
+    else:
+        image_url = None
 
     user = User(first_name=first_name, last_name=last_name, image_url=image_url)
     db.session.add(user)
@@ -72,6 +78,14 @@ def edit_user_update(user_id):
     user = User.query.get(user_id)
     user.first_name = first_name
     user.last_name = last_name
+
+    if image_url:
+        if len(image_url) > 1000:
+            image_url = user.default_url
+            flash('Image URL greater than 1000, using default image')
+    else:
+        image_url = user.default_url
+    
     user.image_url = image_url
 
     db.session.commit() 
