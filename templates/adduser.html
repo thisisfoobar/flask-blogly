@@ -6,9 +6,9 @@
 <h1>Create a user</h1>
 <form action="/users/new" method="POST" class="col-md-4">
     <label class="form-label" for="firstname">First Name</label>
-    <input class="form-control" type="text" name="firstname" placeholder="Enter a first name" required>
+    <input class="form-control" type="text" name="firstname" placeholder="Enter a first name" maxlength="30" required>
     <label class="form-label" for="lastname">Last Name</label>
-    <input class="form-control" type="text" name="lastname" placeholder="Enter a last name" required>
+    <input class="form-control" type="text" name="lastname" placeholder="Enter a last name" maxlength="30" required>
     <label class="form-label" for="url">Image URL</label>
     <input class="form-control" type="text" name="url" placeholder="Enter an image url">
     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
