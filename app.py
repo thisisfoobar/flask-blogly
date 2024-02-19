@@ -1,7 +1,7 @@
 """Blogly application."""
 
 from flask import Flask, request, redirect, render_template, flash, get_flashed_messages
-from models import db, connect_db, User, Post
+from models import db, connect_db, User, Post, Tag, PostTag
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly'
@@ -15,11 +15,16 @@ debug = DebugToolbarExtension(app)
 
 connect_db(app)
 
+"""Home page"""
 @app.route("/")
 def user_redirect():
-    """redirect to list of users"""
-    return redirect("/users")
+    """Display Home Page"""
 
+    posts = Post.query.limit(5).all()
+
+    return render_template("home.html",posts=posts)
+
+"""Users routes"""
 @app.route("/users")
 def users_list():
     """display list of all users"""
@@ -99,8 +104,9 @@ def delete_user(user_id):
 def new_post_form(user_id):
     """Add a new post from a user"""
     user = User.query.get_or_404(user_id)
+    tags = Tag.query.all()
 
-    return render_template("newpost.html",user=user)
+    return render_template("newpost.html",user=user,tags=tags)
 
 
 @app.route("/users/<int:user_id>/posts/new", methods=["POST"])
@@ -109,8 +115,10 @@ def add_post(user_id):
 
     title = request.form['title']
     content = request.form['content']
+    tag_ids = [int(num) for num in request.form.getlist("tags")]
+    tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
 
-    new_post = Post(title=title,content=content,user_id=user_id)
+    new_post = Post(title=title,content=content,user_id=user_id,tags=tags)
     db.session.add(new_post)
     db.session.commit()
 
@@ -118,7 +126,7 @@ def add_post(user_id):
 
     return redirect(f"/users/{user_id}")
 
-
+"""Post routes"""
 @app.route("/posts/<int:post_id>")
 def display_post(post_id):
     """Show single post"""
@@ -130,10 +138,10 @@ def display_post(post_id):
 @app.route("/posts/<int:post_id>/edit")
 def edit_post_form(post_id):
     """Edit post"""
-
+    tags = Tag.query.all()
     post = Post.query.get_or_404(post_id)
 
-    return render_template("editpost.html",post=post)
+    return render_template("editpost.html",post=post,tags=tags)
 
 @app.route("/posts/<int:post_id>/edit", methods=["POST"])
 def edit_post_update(post_id):
@@ -146,6 +154,9 @@ def edit_post_update(post_id):
 
     post.title = title
     post.content = content
+
+    tag_ids = [int(num) for num in request.form.getlist("tags")]
+    post.tags = Tag.query.filter(Tag.id.in_(tag_ids)).all()
 
     db.session.add(post)
     db.session.commit()
@@ -166,3 +177,90 @@ def delete_post(post_id):
     flash(f'Post deleted')
 
     return redirect(f"/users/{user_id}")
+
+"""Tag routes"""
+@app.route("/tags")
+def tags_list():
+    """Display list of all tags"""
+
+    tags = Tag.query.all()
+
+    return render_template("taglist.html", tags=tags)
+
+@app.route("/tags/new")
+def add_tag_form():
+    """Display form to add new tag"""
+
+    return render_template("newtag.html")
+
+@app.route("/tags/new",methods=["POST"])
+def add_tag():
+    """Push new tag to database"""
+    name = request.form['name']
+
+    all_tags = Tag.query.with_entities(Tag.name).all()
+    upper_tags = [tag[0].upper() for tag in all_tags]
+
+    if name.upper() in upper_tags:
+        flash(f"{name} already exists")
+        return redirect("/tags")
+    else:
+        new_tag = Tag(name=name)
+        db.session.add(new_tag)
+        db.session.commit()
+
+        flash(f"{new_tag.name} created")
+
+        return redirect("/tags")
+    
+@app.route("/tags/<int:tag_id>")
+def show_tag(tag_id):
+    """Show tag and associated posts"""
+
+    tag = Tag.query.get_or_404(tag_id)
+
+    return render_template("tagdetails.html",tag=tag)
+
+
+@app.route("/tags/<int:tag_id>/edit")
+def edit_tag_form(tag_id):
+    """display form to update tag info"""
+
+    tag = Tag.query.get_or_404(tag_id)
+
+    return render_template("edittag.html",tag=tag)
+
+@app.route("/tags/<int:tag_id>/edit",methods=["POST"])
+def edit_tag_update(tag_id):
+    """update tag in the database"""
+
+    tag = Tag.query.get_or_404(tag_id)
+    old_name = tag.name
+    name = request.form['name']
+
+    all_tags = Tag.query.with_entities(Tag.name).all()
+    upper_tags = [tag[0].upper() for tag in all_tags]
+
+    if name.upper() in upper_tags:
+        flash(f"{name} already exists, edit not saved")
+        return redirect("/tags")
+    else:
+        tag.name = name
+        db.session.add(tag)
+        db.session.commit()
+
+        flash(f"{old_name} updated to {tag.name}")
+
+        return redirect("/tags")
+
+@app.route("/tags/<int:tag_id>/delete",methods=["POST"])
+def delete_tag(tag_id):
+    """delete tag from the database"""
+
+    tag = Tag.query.get_or_404(tag_id)
+
+    db.session.delete(tag)
+    db.session.commit()
+    flash(f"{tag.name} deleted")
+
+    return redirect("/tags")

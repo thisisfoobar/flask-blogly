@@ -27,7 +27,7 @@ class User(db.Model):
                           nullable=True,
                           default=default_url)
     
-    posts = db.relationship("Post", backref="user")
+    posts = db.relationship("Post", backref="user",cascade="all, delete-orphan")
         
     @property
     def full_name(self):
@@ -63,6 +63,29 @@ class Post(db.Model):
     user_id = db.Column(db.Integer,
                         db.ForeignKey("users.id"),
                         nullable=False)
-    
-    
+          
+class Tag(db.Model):
+    """Tags for posts"""
 
+    __tablename__ = "tags"
+
+    id = db.Column(db.Integer,
+                   primary_key=True,
+                   autoincrement=True)
+    name = db.Column(db.Text,
+                     nullable=False)
+    
+    posts = db.relationship('Post',secondary="post_tags",cascade="all, delete",backref='tags')
+    
+class PostTag(db.Model):
+    """M2M Relationship between Tags and Posts"""
+
+    __tablename__ = "post_tags"
+
+    post_id = db.Column(db.Integer,
+                        db.ForeignKey("posts.id"),
+                        primary_key=True)
+    tag_id = db.Column(db.Integer,
+                       db.ForeignKey("tags.id"),
+                       primary_key=True)
+    
